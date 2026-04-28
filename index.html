@@ -114,9 +114,10 @@ header p { font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:3px; text-t
 main { padding:20px 14px 40px; max-width:1400px; margin:0 auto; }
 .month-title { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; color:var(--grass); margin-bottom:16px; text-align:center; }
 
-.cal-grid-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:100%; }
-.cal-grid { display:flex; flex-direction:column; border:1.5px solid var(--border); border-radius:12px; overflow:hidden; background:white; }
-.week-grid { display:grid; border-bottom:2px solid var(--border); }
+.cal-grid-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:100%; touch-action:pan-x pan-y; cursor:grab; }
+.cal-grid-wrap:active { cursor:grabbing; }
+.cal-grid { display:flex; flex-direction:column; border:1.5px solid var(--border); border-radius:12px; overflow:hidden; background:white; min-width:max-content; }
+.week-grid { display:grid; border-bottom:2px solid var(--border); min-width:max-content; }
 .week-grid:last-child { border-bottom:none; }
 .col-head { background:var(--night); color:white; text-align:center; padding:10px 4px 8px; border-right:1px solid rgba(255,255,255,0.08); }
 .col-head .dname { font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:2px; color:var(--gold); display:block; }
@@ -203,7 +204,19 @@ main { padding:20px 14px 40px; max-width:1400px; margin:0 auto; }
 .preview-actions { display:flex; gap:8px; }
 .preview-actions .btn { flex:1; padding:10px; font-size:0.85rem; border-radius:9px; }
 
-@media(max-width:680px) { .cal-grid { font-size:0.78rem; } .controls { padding:10px 12px; } main { padding:14px 6px 30px; } }
+@media(max-width:680px) {
+.cal-grid { font-size:0.78rem; }
+.controls { padding:10px 12px; gap:6px; }
+main { padding:14px 6px 30px; }
+.slot-cell { min-width:110px; min-height:80px; }
+.slot-lbl { min-height:80px; padding:6px; }
+.slot-lbl .trange { font-size:0.62rem; }
+.col-head { padding:8px 3px 6px; }
+.col-head .dname { font-size:0.85rem; }
+.month-title { font-size:1.1rem; }
+.controls select { font-size:0.78rem; padding:5px 8px; }
+.btn { padding:6px 10px; font-size:0.78rem; }
+}
 </style>
 </head>
 <body>
@@ -881,6 +894,17 @@ function exportSummary(){
   if(win){win.document.write('<pre style="font-family:monospace;font-size:13px;padding:20px;">'+text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre>');win.document.close();}
   else if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){alert('Copied!');});}
 }
+
+// Touch drag scroll for calendar on mobile
+(function(){
+  var wrap = document.getElementById('calGrid').parentElement;
+  var isDown = false;
+  var startX, scrollLeft;
+  wrap.addEventListener('mousedown', function(e){ isDown=true; startX=e.pageX-wrap.offsetLeft; scrollLeft=wrap.scrollLeft; });
+  wrap.addEventListener('mouseleave', function(){ isDown=false; });
+  wrap.addEventListener('mouseup', function(){ isDown=false; });
+  wrap.addEventListener('mousemove', function(e){ if(!isDown)return; e.preventDefault(); var x=e.pageX-wrap.offsetLeft; wrap.scrollLeft=scrollLeft-(x-startX); });
+})();
 
 document.getElementById('slotOverlay').addEventListener('click',function(e){if(e.target===this)closeSlotModal();});
 document.getElementById('dayOverlay').addEventListener('click',function(e){if(e.target===this)closeDayModal();});
