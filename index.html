@@ -271,7 +271,7 @@ main { padding:14px 6px 30px; }
 <option value="1">February 2026</option>
 <option value="2">March 2026</option>
 <option value="3">April 2026</option>
-<option value="4" selected>May 2026</option>
+<option value="4">May 2026</option>
 <option value="5">June 2026</option>
 <option value="6">July 2026</option>
 <option value="7">August 2026</option>
@@ -910,7 +910,21 @@ document.getElementById('slotOverlay').addEventListener('click',function(e){if(e
 document.getElementById('dayOverlay').addEventListener('click',function(e){if(e.target===this)closeDayModal();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSlotModal();closeDayModal();}});
 
+// Set current month automatically
+var currentMonth = new Date().getMonth();
+document.getElementById('monthSel').value = currentMonth;
 populateWeeks();
+// Set current week
+var todayDate = new Date();
+var weeks = buildWeeksForMonth(ALL_MONTHS[currentMonth]);
+for(var wi=0; wi<weeks.length; wi++){
+  for(var di=0; di<weeks[wi].length; di++){
+    if(weeks[wi][di].num === todayDate.getDate()){
+      document.getElementById('weekSel').value = wi;
+      break;
+    }
+  }
+}
 renderWeek();
 </script>
 </body>
