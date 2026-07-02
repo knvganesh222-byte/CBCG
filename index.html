@@ -373,17 +373,31 @@ main { padding:14px 6px 30px; }
 
 <script>
 window.bookings = window.bookings || {};
+var ADMIN_PWD = 'CBCGowner@2026';
 var STAFF_PWD = 'Booking@2026';
 var isStaff = false;
+var isAdmin = false;
 
 function tryLogin() {
   var pwd = document.getElementById('loginPwd').value;
-  if (pwd === STAFF_PWD) {
+  if (pwd === ADMIN_PWD) {
     isStaff = true;
+    isAdmin = true;
     document.getElementById('loginOverlay').classList.remove('on');
     document.getElementById('staffBar').classList.add('on');
+    document.getElementById('staffBar').querySelector('.sb-label').textContent = '👑 Admin Mode';
     document.getElementById('btnNextWeek').style.display = '';
     document.getElementById('btnExport').style.display = '';
+    document.getElementById('clipBar').style.display = '';
+    populateWeeks(); renderWeek();
+  } else if (pwd === STAFF_PWD) {
+    isStaff = true;
+    isAdmin = false;
+    document.getElementById('loginOverlay').classList.remove('on');
+    document.getElementById('staffBar').classList.add('on');
+    document.getElementById('staffBar').querySelector('.sb-label').textContent = '👤 Staff Mode';
+    document.getElementById('btnNextWeek').style.display = '';
+    document.getElementById('btnExport').style.display = 'none';
     document.getElementById('clipBar').style.display = '';
     populateWeeks(); renderWeek();
   } else {
@@ -400,6 +414,7 @@ function enterViewOnly() {
 }
 function doLogout() {
   isStaff = false;
+  isAdmin = false;
   document.getElementById('staffBar').classList.remove('on');
   document.getElementById('viewonlyBar').classList.remove('on');
   document.getElementById('clipBar').style.display = 'none';
@@ -815,13 +830,15 @@ function buildWeekGrid(grid, days){
               })(day.full,slot.id,cell,b,slot.label);
               btnRow.appendChild(dl);
               chip.appendChild(btnRow);
-              var adv=parseInt(b.advance)||0; var pend=parseInt(b.pending)||0;
-              if(adv>0||pend>0){
-                var pills=document.createElement('div'); pills.className='pay-pills';
-                if(adv>0){var ap=document.createElement('span');ap.className='pay-pill adv';ap.textContent='✅ Rs.'+adv.toLocaleString('en-IN');pills.appendChild(ap);}
-                if(pend>0){var pp=document.createElement('span');pp.className='pay-pill pend';pp.textContent='⏳ Rs.'+pend.toLocaleString('en-IN');pills.appendChild(pp);}
-                else if(adv>0){var fp=document.createElement('span');fp.className='pay-pill fullpaid';fp.textContent='✅ Paid';pills.appendChild(fp);}
-                chip.appendChild(pills);
+              if(isAdmin){
+                var adv=parseInt(b.advance)||0; var pend=parseInt(b.pending)||0;
+                if(adv>0||pend>0){
+                  var pills=document.createElement('div'); pills.className='pay-pills';
+                  if(adv>0){var ap=document.createElement('span');ap.className='pay-pill adv';ap.textContent='✅ Rs.'+adv.toLocaleString('en-IN');pills.appendChild(ap);}
+                  if(pend>0){var pp=document.createElement('span');pp.className='pay-pill pend';pp.textContent='⏳ Rs.'+pend.toLocaleString('en-IN');pills.appendChild(pp);}
+                  else if(adv>0){var fp=document.createElement('span');fp.className='pay-pill fullpaid';fp.textContent='✅ Paid';pills.appendChild(fp);}
+                  chip.appendChild(pills);
+                }
               }
             }
             cell.appendChild(chip);
@@ -849,7 +866,7 @@ function buildWeekGrid(grid, days){
 }
 
 function renderSummary(){
-  if(!isStaff){document.getElementById('summaryBar').style.display='none';return;}
+  if(!isStaff||!isAdmin){document.getElementById('summaryBar').style.display='none';return;}
   document.getElementById('summaryBar').style.display='';
   var tot=0,day=0,night=0,advTot=0,pendTot=0;
   for(var i=0;i<ALL_DAYS.length;i++){
