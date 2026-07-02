@@ -204,6 +204,42 @@ main { padding:20px 14px 40px; max-width:1400px; margin:0 auto; }
 .preview-actions { display:flex; gap:8px; }
 .preview-actions .btn { flex:1; padding:10px; font-size:0.85rem; border-radius:9px; }
 
+/* Amount Paid button */
+.cbtn.pay { background:#16a34a; color:white; font-size:7px; font-weight:700; width:22px; height:22px; }
+.cbtn.pay:hover { background:#15803d; }
+.cbtn.pay.done { background:#1e3a5f; }
+
+/* Expenses modal */
+.exp-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+.exp-overlay.on { display:flex; }
+.exp-modal { background:white; border-radius:14px; padding:24px; width:380px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+.exp-modal h3 { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:#dc2626; letter-spacing:1px; margin-bottom:16px; }
+.exp-form { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.exp-form input { width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-family:'DM Sans',sans-serif; font-size:0.88rem; background:var(--cream); outline:none; }
+.exp-form input:focus { border-color:#dc2626; }
+.exp-add-btn { background:#dc2626; color:white; border:none; border-radius:8px; padding:10px; font-family:'DM Sans',sans-serif; font-weight:700; font-size:0.88rem; cursor:pointer; }
+.exp-add-btn:hover { background:#b91c1c; }
+.exp-list { display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto; }
+.exp-item { background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; }
+.exp-item .exp-info { display:flex; flex-direction:column; gap:2px; }
+.exp-item .exp-desc { font-size:0.82rem; font-weight:600; color:var(--text); }
+.exp-item .exp-date { font-size:0.72rem; color:var(--muted); }
+.exp-item .exp-amt { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:#dc2626; }
+.exp-item .exp-del { background:none; border:none; color:#dc2626; cursor:pointer; font-size:1rem; padding:0 4px; }
+.exp-total { background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+.exp-total span { font-size:0.82rem; font-weight:700; color:#dc2626; text-transform:uppercase; }
+.exp-total strong { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:#dc2626; }
+
+/* Amount paid modal */
+.amtpaid-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+.amtpaid-overlay.on { display:flex; }
+.amtpaid-modal { background:white; border-radius:14px; padding:24px; width:320px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.25); }
+.amtpaid-modal h3 { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; color:#16a34a; letter-spacing:1px; margin-bottom:4px; }
+.amtpaid-modal .minfo { font-size:0.8rem; color:var(--muted); margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+.amtpaid-modal label { display:block; font-size:0.75rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; margin-top:12px; }
+.amtpaid-modal input { width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-family:'DM Sans',sans-serif; font-size:0.88rem; background:var(--cream); outline:none; }
+.amtpaid-modal input:focus { border-color:#16a34a; }
+
 @media(max-width:680px) {
 .cal-grid { font-size:0.78rem; }
 .controls { padding:10px 12px; gap:6px; }
@@ -285,6 +321,7 @@ main { padding:14px 6px 30px; }
 <button class="btn" style="background:#25d366;color:white;" onclick="shareAvailabilityWA()">📲 Share Availability</button>
 <button class="btn" id="btnNextWeek" style="background:#0d1b2a;color:white;display:none;" onclick="nextWeekSlots()">📋 Next Week Slots</button>
 <button class="btn btn-gold" id="btnExport" style="display:none;" onclick="exportSummary()">📋 Export Summary</button>
+<button class="btn" id="btnExpenses" style="display:none;background:#dc2626;color:white;" onclick="openExpenses()">💸 Expenses</button>
 </div>
 
 <div class="clip-bar" id="clipBar" style="display:none;">
@@ -371,6 +408,43 @@ main { padding:14px 6px 30px; }
 </div>
 </div>
 
+<!-- Amount Paid Modal -->
+<div class="amtpaid-overlay" id="amtpaidOverlay">
+<div class="amtpaid-modal">
+<h3>💰 Amount Paid</h3>
+<div class="minfo" id="amtpaidInfo"></div>
+<label>Amount Received After Match (Rs)</label>
+<input type="number" id="amtPaidInput" placeholder="e.g. 4500" />
+<label>Note (optional)</label>
+<input type="text" id="amtPaidNote" placeholder="e.g. Cash received" />
+<div class="mactions">
+<button class="btn" style="background:#f3f4f6;color:#6b7280;" onclick="closeAmtPaid()">Cancel</button>
+<button class="btn" style="background:#16a34a;color:white;font-weight:700;" onclick="confirmAmtPaid()">💾 Save</button>
+</div>
+</div>
+</div>
+
+<!-- Expenses Modal -->
+<div class="exp-overlay" id="expOverlay">
+<div class="exp-modal">
+<h3>💸 Expenses</h3>
+<div class="exp-form">
+<input type="text" id="expDesc" placeholder="Description (e.g. Electricity bill)" />
+<input type="number" id="expAmt" placeholder="Amount (Rs)" />
+<input type="date" id="expDate" />
+<button class="exp-add-btn" onclick="addExpense()">+ Add Expense</button>
+</div>
+<div class="exp-list" id="expList"></div>
+<div class="exp-total" id="expTotal" style="display:none;">
+<span>Total Expenses</span>
+<strong id="expTotalAmt">Rs.0</strong>
+</div>
+<div class="mactions" style="margin-top:16px;">
+<button class="btn" style="background:#f3f4f6;color:#6b7280;" onclick="closeExpenses()">Close</button>
+</div>
+</div>
+</div>
+
 <script>
 window.bookings = window.bookings || {};
 var ADMIN_PWD = 'CBCGowner@2026';
@@ -388,6 +462,7 @@ function tryLogin() {
     document.getElementById('staffBar').querySelector('.sb-label').textContent = '👑 Admin Mode';
     document.getElementById('btnNextWeek').style.display = '';
     document.getElementById('btnExport').style.display = '';
+    document.getElementById('btnExpenses').style.display = '';
     document.getElementById('clipBar').style.display = '';
     populateWeeks(); renderWeek();
   } else if (pwd === STAFF_PWD) {
@@ -418,6 +493,7 @@ function doLogout() {
   document.getElementById('staffBar').classList.remove('on');
   document.getElementById('viewonlyBar').classList.remove('on');
   document.getElementById('clipBar').style.display = 'none';
+  document.getElementById('btnExpenses').style.display = 'none';
   document.getElementById('loginPwd').value = '';
   document.getElementById('loginErr').style.display = 'none';
   document.getElementById('loginOverlay').classList.add('on');
@@ -805,6 +881,14 @@ function buildWeekGrid(grid, days){
               var ed=document.createElement('button'); ed.className='cbtn edt'; ed.title='Edit'; ed.textContent='✎'; ed.style.fontWeight='700';
               (function(dt,sl,bd){ed.onclick=function(e){e.stopPropagation();openEditModal(dt,sl,bd);};})(day.full,slot,b);
               btnRow.appendChild(ed);
+              if(isAdmin){
+                var pybtn=document.createElement('button');
+                pybtn.className='cbtn pay'+(b.amtPaid?' done':'');
+                pybtn.title=b.amtPaid?'Paid: Rs.'+parseInt(b.amtPaid).toLocaleString('en-IN'):'Enter Amount Paid';
+                pybtn.textContent=b.amtPaid?'₹✓':'₹';
+                (function(dt,si,bdata,slabel){pybtn.onclick=function(e){e.stopPropagation();openAmtPaid(dt,si,bdata,slabel);};})(day.full,slot.id,b,slot.label);
+                btnRow.appendChild(pybtn);
+              }
               var cp=document.createElement('button'); cp.className='cbtn cpy'; cp.title='Copy'; cp.textContent='CP'; cp.style.fontSize='7px'; cp.style.fontWeight='700';
               (function(na,ph,adv,pend,bl){cp.onclick=function(e){e.stopPropagation();copyToClip(na,ph,adv,pend,bl);};})(b.name,b.phone,b.advance,b.pending,b.ball);
               btnRow.appendChild(cp);
@@ -922,6 +1006,82 @@ function exportSummary(){
   wrap.addEventListener('mouseup', function(){ isDown=false; });
   wrap.addEventListener('mousemove', function(e){ if(!isDown)return; e.preventDefault(); var x=e.pageX-wrap.offsetLeft; wrap.scrollLeft=scrollLeft-(x-startX); });
 })();
+
+// ── Amount Paid ──────────────────────────────────────
+var pendAmtPaid = null;
+function openAmtPaid(date, slotId, bdata, slabel) {
+  pendAmtPaid = {date:date, slotId:slotId, bdata:bdata};
+  var d2=new Date(date+'T00:00:00');
+  document.getElementById('amtpaidInfo').textContent=bdata.name+' — '+slabel+', '+d2.getDate()+' '+MONTH_NAMES[d2.getMonth()];
+  document.getElementById('amtPaidInput').value=bdata.amtPaid||'';
+  document.getElementById('amtPaidNote').value=bdata.amtNote||'';
+  document.getElementById('amtpaidOverlay').classList.add('on');
+  setTimeout(function(){document.getElementById('amtPaidInput').focus();},80);
+}
+function closeAmtPaid(){document.getElementById('amtpaidOverlay').classList.remove('on');pendAmtPaid=null;}
+function confirmAmtPaid(){
+  if(!pendAmtPaid)return;
+  var amt=document.getElementById('amtPaidInput').value.trim();
+  var note=document.getElementById('amtPaidNote').value.trim();
+  if(!amt){alert('Please enter amount.');return;}
+  var updated=Object.assign({},pendAmtPaid.bdata,{amtPaid:amt,amtNote:note});
+  window.safeSlot(pendAmtPaid.date,pendAmtPaid.slotId,updated);
+  closeAmtPaid();
+}
+document.getElementById('amtpaidOverlay').addEventListener('click',function(e){if(e.target===this)closeAmtPaid();});
+
+// ── Expenses ──────────────────────────────────────────
+var expenses = [];
+try { expenses = JSON.parse(localStorage.getItem('CBCG_expenses')||'[]'); } catch(e){ expenses=[]; }
+
+function saveExpenses(){ try{localStorage.setItem('CBCG_expenses',JSON.stringify(expenses));}catch(e){} }
+
+function openExpenses(){
+  document.getElementById('expDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('expDesc').value='';
+  document.getElementById('expAmt').value='';
+  renderExpList();
+  document.getElementById('expOverlay').classList.add('on');
+}
+function closeExpenses(){document.getElementById('expOverlay').classList.remove('on');}
+
+function addExpense(){
+  var desc=document.getElementById('expDesc').value.trim();
+  var amt=document.getElementById('expAmt').value.trim();
+  var date=document.getElementById('expDate').value;
+  if(!desc){alert('Please enter description.');return;}
+  if(!amt){alert('Please enter amount.');return;}
+  if(!date){alert('Please select date.');return;}
+  expenses.unshift({id:Date.now(),desc:desc,amt:parseInt(amt),date:date});
+  saveExpenses();
+  document.getElementById('expDesc').value='';
+  document.getElementById('expAmt').value='';
+  renderExpList();
+}
+
+function deleteExpense(id){
+  expenses=expenses.filter(function(e){return e.id!==id;});
+  saveExpenses();
+  renderExpList();
+}
+
+function renderExpList(){
+  var list=document.getElementById('expList');
+  list.innerHTML='';
+  if(!expenses.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">No expenses added yet</div>';document.getElementById('expTotal').style.display='none';return;}
+  var total=0;
+  expenses.forEach(function(e){
+    total+=e.amt;
+    var d=new Date(e.date+'T00:00:00');
+    var dateStr=d.getDate()+' '+MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
+    var item=document.createElement('div'); item.className='exp-item';
+    item.innerHTML='<div class="exp-info"><div class="exp-desc">'+e.desc+'</div><div class="exp-date">📅 '+dateStr+'</div></div><div style="display:flex;align-items:center;gap:8px;"><div class="exp-amt">Rs.'+e.amt.toLocaleString('en-IN')+'</div><button class="exp-del" onclick="deleteExpense('+e.id+')">🗑</button></div>';
+    list.appendChild(item);
+  });
+  document.getElementById('expTotal').style.display='flex';
+  document.getElementById('expTotalAmt').textContent='Rs.'+total.toLocaleString('en-IN');
+}
+document.getElementById('expOverlay').addEventListener('click',function(e){if(e.target===this)closeExpenses();});
 
 document.getElementById('slotOverlay').addEventListener('click',function(e){if(e.target===this)closeSlotModal();});
 document.getElementById('dayOverlay').addEventListener('click',function(e){if(e.target===this)closeDayModal();});
