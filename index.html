@@ -322,6 +322,7 @@ main { padding:14px 6px 30px; }
 <button class="btn" id="btnNextWeek" style="background:#0d1b2a;color:white;display:none;" onclick="nextWeekSlots()">📋 Next Week Slots</button>
 <button class="btn btn-gold" id="btnExport" style="display:none;" onclick="exportSummary()">📋 Export Summary</button>
 <button class="btn" id="btnExpenses" style="display:none;background:#dc2626;color:white;" onclick="openExpenses()">💸 Expenses</button>
+<button class="btn" id="btnNightReport" style="display:none;background:#0d1b2a;color:#f4a900;font-weight:700;" onclick="sendNightReport()">🌙 Night Report</button>
 </div>
 
 <div class="clip-bar" id="clipBar" style="display:none;">
@@ -463,6 +464,7 @@ function tryLogin() {
     document.getElementById('btnNextWeek').style.display = '';
     document.getElementById('btnExport').style.display = '';
     document.getElementById('btnExpenses').style.display = '';
+    document.getElementById('btnNightReport').style.display = '';
     document.getElementById('clipBar').style.display = '';
     populateWeeks(); renderWeek();
   } else if (pwd === STAFF_PWD) {
@@ -494,6 +496,7 @@ function doLogout() {
   document.getElementById('viewonlyBar').classList.remove('on');
   document.getElementById('clipBar').style.display = 'none';
   document.getElementById('btnExpenses').style.display = 'none';
+  document.getElementById('btnNightReport').style.display = 'none';
   document.getElementById('loginPwd').value = '';
   document.getElementById('loginErr').style.display = 'none';
   document.getElementById('loginOverlay').classList.add('on');
@@ -1006,6 +1009,50 @@ function exportSummary(){
   wrap.addEventListener('mouseup', function(){ isDown=false; });
   wrap.addEventListener('mousemove', function(e){ if(!isDown)return; e.preventDefault(); var x=e.pageX-wrap.offsetLeft; wrap.scrollLeft=scrollLeft-(x-startX); });
 })();
+
+// ── Night Slot Report ────────────────────────────────
+function sendNightReport(){
+  var mi=parseInt(document.getElementById('monthSel').value)||0;
+  var monthDays=ALL_MONTHS[mi];
+  var nightBookings=[];
+  var totalAmt=0, totalPaid=0;
+  for(var i=0;i<monthDays.length;i++){
+    var day=monthDays[i];
+    var db=window.bookings[day.full];
+    if(!db) continue;
+    for(var j=0;j<SLOTS.length;j++){
+      if(SLOTS[j].type!=='night') continue;
+      var b=db[SLOTS[j].id];
+      if(!b) continue;
+      var d2=new Date(day.full+'T00:00:00');
+      var dateStr=d2.getDate()+' '+MONTH_SHORT[mi];
+      var slotAmt=parseInt(b.amtPaid)||0;
+      var advance=parseInt(b.advance)||0;
+      var pending=parseInt(b.pending)||0;
+      totalAmt+=(advance+pending);
+      totalPaid+=slotAmt;
+      nightBookings.push({date:dateStr,name:b.name,slot:SLOTS[j].label,advance:advance,pending:pending,total:advance+pending,amtPaid:slotAmt});
+    }
+  }
+  if(!nightBookings.length){ alert('No night slot bookings found for '+MONTH_NAMES[mi]+'!'); return; }
+  var msg='\uD83C\uDF19 *Night Slot Report \u2014 '+MONTH_NAMES[mi]+' 2026*\n';
+  msg+='\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n';
+  for(var k=0;k<nightBookings.length;k++){
+    var nb=nightBookings[k];
+    msg+='\uD83D\uDCC5 *'+nb.date+'* | '+nb.slot+'\n';
+    msg+='\uD83D\uDC64 '+nb.name+'\n';
+    msg+='\uD83D\uDCB0 Total: Rs.'+nb.total.toLocaleString('en-IN');
+    if(nb.amtPaid) msg+=' | Paid: Rs.'+nb.amtPaid.toLocaleString('en-IN');
+    msg+='\n\n';
+  }
+  msg+='\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n';
+  msg+='\uD83D\uDCCA *Summary*\n';
+  msg+='Total Bookings: '+nightBookings.length+'\n';
+  msg+='Total Amount: Rs.'+totalAmt.toLocaleString('en-IN')+'\n';
+  msg+='Amount Received: Rs.'+totalPaid.toLocaleString('en-IN')+'\n';
+  msg+='Remaining: Rs.'+(totalAmt-totalPaid).toLocaleString('en-IN');
+  window.open('https://wa.me/919182007234?text='+encodeURIComponent(msg),'_blank');
+}
 
 // ── Amount Paid ──────────────────────────────────────
 var pendAmtPaid = null;
