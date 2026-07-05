@@ -965,18 +965,18 @@ function renderSummary(){
   var wi=parseInt(document.getElementById('weekSel').value)||0;
   var weeks=buildWeeksForMonth(ALL_MONTHS[mi]);
   var days=weeks[wi]||weeks[0];
-  var tot=0,day=0,night=0,advTot=0,pendTot=0,amtCollected=0,nightAmt=0;
+  var tot=0,day=0,night=0,advTot=0,pendTot=0,amtCollected=0,nightAmt=0,dayAmt=0;
   for(var i=0;i<days.length;i++){
     for(var j=0;j<SLOTS.length;j++){
       var b=window.bookings[days[i].full]&&window.bookings[days[i].full][SLOTS[j].id]?window.bookings[days[i].full][SLOTS[j].id]:null;
-      if(b){tot++;if(SLOTS[j].type==='day')day++;else{night++;nightAmt+=parseInt(b.amtPaid)||0;}advTot+=parseInt(b.advance)||0;pendTot+=parseInt(b.pending)||0;amtCollected+=parseInt(b.amtPaid)||0;}
+      if(b){tot++;if(SLOTS[j].type==='day'){day++;dayAmt+=parseInt(b.amtPaid)||0;}else{night++;nightAmt+=parseInt(b.amtPaid)||0;}advTot+=parseInt(b.advance)||0;pendTot+=parseInt(b.pending)||0;amtCollected+=parseInt(b.amtPaid)||0;}
     }
   }
   var totalSlots=days.length*SLOTS.length;
   var weekLabel=MONTH_NAMES[mi]+' — Week '+(wi+1);
   document.getElementById('summaryBar').innerHTML=
     '<div class="stat-card"><div class="slbl">Bookings</div><div class="sval">'+tot+'</div><div class="ssub">of '+totalSlots+' slots | '+weekLabel+'</div></div>'+
-    '<div class="stat-card"><div class="slbl">Day Slots</div><div class="sval">'+day+'</div><div class="ssub">Weekday Rs.3500-4000 | Weekend Rs.4500</div></div>'+
+    '<div class="stat-card"><div class="slbl">Day Slots</div><div class="sval">'+day+'</div><div class="ssub">Weekday Rs.3500-4000 | Weekend Rs.4500</div></div>'+    '<div class="stat-card" style="border-left-color:#0891b2;"><div class="slbl">Day Amt Collected</div><div class="sval">Rs.'+(dayAmt/1000).toFixed(1)+'K</div><div class="ssub">Rs.'+dayAmt.toLocaleString('en-IN')+' received</div></div>'+
     '<div class="stat-card nc"><div class="slbl">Night Slots</div><div class="sval">'+night+'</div><div class="ssub">@ Rs.8,000 each</div></div>'+    '<div class="stat-card" style="border-left-color:#7c3aed;"><div class="slbl">Night Amt Collected</div><div class="sval">Rs.'+(nightAmt/1000).toFixed(1)+'K</div><div class="ssub">Rs.'+nightAmt.toLocaleString('en-IN')+' received</div></div>'+
     
     '<div class="stat-card rc"><div class="slbl">Amount Collected</div><div class="sval">Rs.'+(amtCollected/1000).toFixed(1)+'K</div><div class="ssub">Rs.'+amtCollected.toLocaleString('en-IN')+' received</div></div>';
