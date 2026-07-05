@@ -763,17 +763,22 @@ function nextWeekSlots(){
     wkd.push({full:y+'-'+(m<10?'0'+m:''+m)+'-'+(dd<10?'0'+dd:''+dd),dt:d});
   }
   var fd=wkd[0].dt; var ld=wkd[6].dt;
-  var msg='*'+fd.getDate()+' '+MN[fd.getMonth()]+' to '+ld.getDate()+' '+MN[ld.getMonth()]+'**All Slots*';
+  var NL='\n';
+  var msg='*'+fd.getDate()+' '+MN[fd.getMonth()]+' to '+ld.getDate()+' '+MN[ld.getMonth()]+'*'+NL+'*All Slots*'+NL;
   for(var i=0;i<wkd.length;i++){
+    var dayName=DN[wkd[i].dt.getDay()];
+    msg+=NL+'*'+dayName+', '+wkd[i].dt.getDate()+' '+MN[wkd[i].dt.getMonth()]+'*'+NL;
     for(var j=0;j<SLOTS.length;j++){
       var b=window.bookings[wkd[i].full]&&window.bookings[wkd[i].full][SLOTS[j].id]?window.bookings[wkd[i].full][SLOTS[j].id]:null;
-      var be=b&&b.ball?(b.ball==='cricket'?' ⚾':' 🎾'):'';
-      msg+=DN[wkd[i].dt.getDay()]+' '+SS[j]+' - '+(b?b.name+be:'')+'';
+      var be=b&&b.ball?(b.ball==='cricket'?' \u26BE':' \uD83C\uDFBE'):'';
+      var teamName=b?b.name+be:'Available';
+      msg+=SS[j]+' - '+teamName+NL;
     }
-    msg+='';
   }
+  msg+=NL+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500'+NL;
+  msg+='\uD83D\uDCDE To book: https://cbcricketground.vercel.app';
   previewMsg=msg;
-  document.getElementById('previewTitle').textContent='📋 Next Week Slots';
+  document.getElementById('previewTitle').textContent='\uD83D\uDCCB Next Week Slots';
   document.getElementById('previewText').value=msg;
   document.getElementById('previewModal').classList.add('on');
 }
