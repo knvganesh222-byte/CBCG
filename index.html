@@ -44,6 +44,23 @@
     }
     await setDoc(ref, existing);
   };
+  // Expenses Firebase functions
+  window._saveExpense = async function(expense) {
+    const ref = doc(db, "expenses", String(expense.id));
+    await setDoc(ref, expense);
+  };
+  window._deleteExpense = async function(id) {
+    const ref = doc(db, "expenses", String(id));
+    await deleteDoc(ref);
+  };
+  // Listen to expenses in real time
+  onSnapshot(collection(db, "expenses"), (snapshot) => {
+    window.expenses = [];
+    snapshot.forEach((docSnap) => { window.expenses.push(docSnap.data()); });
+    window.expenses.sort(function(a,b){ return b.id - a.id; });
+    if (typeof renderExpList === "function") renderExpList();
+  });
+
   window._fbReady = true;
   if (window._fbQueue) { window._fbQueue.forEach(fn => fn()); window._fbQueue = []; }
 </script>
@@ -1090,10 +1107,7 @@ function confirmAmtPaid(){
 document.getElementById('amtpaidOverlay').addEventListener('click',function(e){if(e.target===this)closeAmtPaid();});
 
 // ── Expenses ──────────────────────────────────────────
-var expenses = [];
-try { expenses = JSON.parse(localStorage.getItem('CBCG_expenses')||'[]'); } catch(e){ expenses=[]; }
-
-function saveExpenses(){ try{localStorage.setItem('CBCG_expenses',JSON.stringify(expenses));}catch(e){} }
+window.expenses = window.expenses || [];
 
 function openExpenses(){
   document.getElementById('expDate').value=new Date().toISOString().split('T')[0];
@@ -1111,25 +1125,24 @@ function addExpense(){
   if(!desc){alert('Please enter description.');return;}
   if(!amt){alert('Please enter amount.');return;}
   if(!date){alert('Please select date.');return;}
-  expenses.unshift({id:Date.now(),desc:desc,amt:parseInt(amt),date:date});
-  saveExpenses();
+  var expense={id:Date.now(),desc:desc,amt:parseInt(amt),date:date};
+  if(window._saveExpense){window._saveExpense(expense);}
   document.getElementById('expDesc').value='';
   document.getElementById('expAmt').value='';
-  renderExpList();
 }
 
 function deleteExpense(id){
-  expenses=expenses.filter(function(e){return e.id!==id;});
-  saveExpenses();
-  renderExpList();
+  if(window._deleteExpense){window._deleteExpense(id);}
 }
 
 function renderExpList(){
   var list=document.getElementById('expList');
+  if(!list) return;
   list.innerHTML='';
-  if(!expenses.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">No expenses added yet</div>';document.getElementById('expTotal').style.display='none';return;}
+  var expData=window.expenses||[];
+  if(!expData.length){list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:0.82rem;padding:20px;">No expenses added yet</div>';document.getElementById('expTotal').style.display='none';return;}
   var total=0;
-  expenses.forEach(function(e){
+  expData.forEach(function(e){
     total+=e.amt;
     var d=new Date(e.date+'T00:00:00');
     var dateStr=d.getDate()+' '+MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
