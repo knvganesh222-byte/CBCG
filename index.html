@@ -1062,35 +1062,43 @@ function sendNightReport(){
       var b=db[SLOTS[j].id];
       if(!b) continue;
       var d2=new Date(day.full+'T00:00:00');
-      var dateStr=d2.getDate()+' '+MONTH_SHORT[mi];
       var slotAmt=parseInt(b.amtPaid)||0;
       var advance=parseInt(b.advance)||0;
       var pending=parseInt(b.pending)||0;
       totalAmt+=(advance+pending);
       totalPaid+=slotAmt;
-      nightBookings.push({date:dateStr,name:b.name,slot:SLOTS[j].label,advance:advance,pending:pending,total:advance+pending,amtPaid:slotAmt});
+      nightBookings.push({
+        date:d2.getDate()+' '+MONTH_NAMES[d2.getMonth()],
+        day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d2.getDay()],
+        name:b.name,
+        slot:SLOTS[j].label,
+        total:advance+pending,
+        amtPaid:slotAmt
+      });
     }
   }
   if(!nightBookings.length){ alert('No night slot bookings found for '+MONTH_NAMES[mi]+'!'); return; }
-  var msg='\uD83C\uDF19 *Night Slot Report \u2014 '+MONTH_NAMES[mi]+' 2026*\n';
-  msg+='\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n';
+  var NL = '\n';
+  var msg = '\uD83C\uDF19 *Night Slots — '+MONTH_NAMES[mi]+' 2026*' + NL;
+  msg += '────────────────────' + NL + NL;
   for(var k=0;k<nightBookings.length;k++){
     var nb=nightBookings[k];
-    msg+='\uD83D\uDCC5 *'+nb.date+'* | '+nb.slot+'\n';
-    msg+='\uD83D\uDC64 '+nb.name+'\n';
-    msg+='\uD83D\uDCB0 Total: Rs.'+nb.total.toLocaleString('en-IN');
-    if(nb.amtPaid) msg+=' | Paid: Rs.'+nb.amtPaid.toLocaleString('en-IN');
-    msg+='\n\n';
+    msg += '\uD83D\uDCC5 *'+nb.day+', '+nb.date+'*' + NL;
+    msg += '\u23F0 '+nb.slot + NL;
+    msg += '\uD83D\uDC64 '+nb.name + NL;
+    msg += '\uD83D\uDCB0 Total: Rs.'+nb.total.toLocaleString('en-IN') + NL;
+    if(nb.amtPaid){ msg += '\u2705 Paid: Rs.'+nb.amtPaid.toLocaleString('en-IN') + NL; }
+    else { msg += '\u23F3 Pending Payment' + NL; }
+    msg += NL;
   }
-  msg+='\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n';
-  msg+='\uD83D\uDCCA *Summary*\n';
-  msg+='Total Bookings: '+nightBookings.length+'\n';
-  msg+='Total Amount: Rs.'+totalAmt.toLocaleString('en-IN')+'\n';
-  msg+='Amount Received: Rs.'+totalPaid.toLocaleString('en-IN')+'\n';
-  msg+='Remaining: Rs.'+(totalAmt-totalPaid).toLocaleString('en-IN');
+  msg += '────────────────────' + NL;
+  msg += '\uD83D\uDCCA *Summary*' + NL;
+  msg += 'Total Bookings : ' + nightBookings.length + NL;
+  msg += 'Total Amount   : Rs.' + totalAmt.toLocaleString('en-IN') + NL;
+  msg += 'Amount Received: Rs.' + totalPaid.toLocaleString('en-IN') + NL;
+  msg += 'Remaining      : Rs.' + (totalAmt-totalPaid).toLocaleString('en-IN');
   window.open('https://wa.me/919182007234?text='+encodeURIComponent(msg),'_blank');
 }
-
 // ── Amount Paid ──────────────────────────────────────
 var pendAmtPaid = null;
 function openAmtPaid(date, slotId, bdata, slabel) {
