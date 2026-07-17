@@ -243,6 +243,7 @@ main { padding:20px 14px 40px; max-width:1400px; margin:0 auto; }
 .exp-item .exp-date { font-size:0.72rem; color:var(--muted); }
 .exp-item .exp-amt { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; color:#dc2626; }
 .exp-item .exp-del { background:none; border:none; color:#dc2626; cursor:pointer; font-size:1rem; padding:0 4px; }
+.exp-edit { background:none; border:none; color:#f4a900; cursor:pointer; font-size:1rem; padding:0 4px; }
 .exp-total { background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
 .exp-total span { font-size:0.82rem; font-weight:700; color:#dc2626; text-transform:uppercase; }
 .exp-total strong { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:#dc2626; }
@@ -446,11 +447,12 @@ main { padding:14px 6px 30px; }
 <div class="exp-overlay" id="expOverlay">
 <div class="exp-modal">
 <h3>💸 Expenses</h3>
-<div class="exp-form">
+<div class="exp-form" id="expFormSection">
 <input type="text" id="expDesc" placeholder="Description (e.g. Electricity bill)" />
 <input type="number" id="expAmt" placeholder="Amount (Rs)" />
 <input type="date" id="expDate" />
-<button class="exp-add-btn" onclick="addExpense()">+ Add Expense</button>
+<button class="exp-add-btn" id="expSaveBtn" onclick="addExpense()">+ Add Expense</button>
+<button class="exp-add-btn" id="expCancelBtn" style="display:none;background:#6b7280;" onclick="cancelEditExpense()">✕ Cancel</button>
 </div>
 <div class="exp-list" id="expList"></div>
 <div class="exp-total" id="expTotal" style="display:none;">
@@ -458,6 +460,7 @@ main { padding:14px 6px 30px; }
 <strong id="expTotalAmt">Rs.0</strong>
 </div>
 <div class="mactions" style="margin-top:16px;">
+<button class="btn" style="background:#25d366;color:white;font-weight:700;" onclick="copyExpenses()">📋 Copy Summary</button>
 <button class="btn" style="background:#f3f4f6;color:#6b7280;" onclick="closeExpenses()">Close</button>
 </div>
 </div>
@@ -1121,7 +1124,67 @@ function openExpenses(){
   renderExpList();
   document.getElementById('expOverlay').classList.add('on');
 }
-function closeExpenses(){document.getElementById('expOverlay').classList.remove('on');}
+function closeExpenses(){
+  cancelEditExpense();
+  document.getElementById('expOverlay').classList.remove('on');
+}
+
+var editingExpId = null;
+
+function editExpense(id){
+  var expData=window.expenses||[];
+  var exp=null;
+  for(var i=0;i<expData.length;i++){if(expData[i].id===id){exp=expData[i];break;}}
+  if(!exp) return;
+  editingExpId=id;
+  document.getElementById('expDesc').value=exp.desc;
+  document.getElementById('expAmt').value=exp.amt;
+  document.getElementById('expDate').value=exp.date;
+  document.getElementById('expSaveBtn').textContent='💾 Update Expense';
+  document.getElementById('expSaveBtn').style.background='#f4a900';
+  document.getElementById('expSaveBtn').style.color='#1a1a1a';
+  document.getElementById('expCancelBtn').style.display='';
+  document.getElementById('expDesc').focus();
+}
+
+function cancelEditExpense(){
+  editingExpId=null;
+  document.getElementById('expDesc').value='';
+  document.getElementById('expAmt').value='';
+  document.getElementById('expDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('expSaveBtn').textContent='+ Add Expense';
+  document.getElementById('expSaveBtn').style.background='#dc2626';
+  document.getElementById('expSaveBtn').style.color='white';
+  document.getElementById('expCancelBtn').style.display='none';
+}
+
+function copyExpenses(){
+  var expData=window.expenses||[];
+  if(!expData.length){alert('No expenses to copy!');return;}
+  var NL='\n';
+  var msg='*CBCG Expenses Summary*'+NL;
+  msg+='───────────────────'+NL+NL;
+  var total=0;
+  var sorted=[].concat(expData).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  sorted.forEach(function(e){
+    var d=new Date(e.date+'T00:00:00');
+    var dateStr=d.getDate()+' '+MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
+    msg+='📅 '+dateStr+NL;
+    msg+='📝 '+e.desc+NL;
+    msg+='💰 Rs.'+e.amt.toLocaleString('en-IN')+NL+NL;
+    total+=e.amt;
+  });
+  msg+='───────────────────'+NL;
+  msg+='*Total: Rs.'+total.toLocaleString('en-IN')+'*';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(msg).then(function(){alert('Expenses summary copied! Paste in WhatsApp.');});
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=msg; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Expenses summary copied! Paste in WhatsApp.');
+  }
+}
 
 function addExpense(){
   var desc=document.getElementById('expDesc').value.trim();
@@ -1130,10 +1193,18 @@ function addExpense(){
   if(!desc){alert('Please enter description.');return;}
   if(!amt){alert('Please enter amount.');return;}
   if(!date){alert('Please select date.');return;}
-  var expense={id:Date.now(),desc:desc,amt:parseInt(amt),date:date};
-  if(window._saveExpense){window._saveExpense(expense);}
-  document.getElementById('expDesc').value='';
-  document.getElementById('expAmt').value='';
+  if(editingExpId){
+    // Update existing
+    var expense={id:editingExpId,desc:desc,amt:parseInt(amt),date:date};
+    if(window._saveExpense){window._saveExpense(expense);}
+    cancelEditExpense();
+  } else {
+    // Add new
+    var expense={id:Date.now(),desc:desc,amt:parseInt(amt),date:date};
+    if(window._saveExpense){window._saveExpense(expense);}
+    document.getElementById('expDesc').value='';
+    document.getElementById('expAmt').value='';
+  }
 }
 
 function deleteExpense(id){
@@ -1152,7 +1223,7 @@ function renderExpList(){
     var d=new Date(e.date+'T00:00:00');
     var dateStr=d.getDate()+' '+MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
     var item=document.createElement('div'); item.className='exp-item';
-    item.innerHTML='<div class="exp-info"><div class="exp-desc">'+e.desc+'</div><div class="exp-date">📅 '+dateStr+'</div></div><div style="display:flex;align-items:center;gap:8px;"><div class="exp-amt">Rs.'+e.amt.toLocaleString('en-IN')+'</div><button class="exp-del" onclick="deleteExpense('+e.id+')">🗑</button></div>';
+    item.innerHTML='<div class="exp-info"><div class="exp-desc">'+e.desc+'</div><div class="exp-date">📅 '+dateStr+'</div></div><div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">Rs.'+e.amt.toLocaleString('en-IN')+'</div><button class="exp-edit" onclick="editExpense('+e.id+')" title="Edit">✏️</button><button class="exp-del" onclick="deleteExpense('+e.id+')" title="Delete">🗑</button></div>';
     list.appendChild(item);
   });
   document.getElementById('expTotal').style.display='flex';
