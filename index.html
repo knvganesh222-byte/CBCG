@@ -21,7 +21,7 @@
   onSnapshot(collection(db, "bookings"), (snapshot) => {
     window.bookings = {};
     snapshot.forEach((docSnap) => { window.bookings[docSnap.id] = docSnap.data(); });
-    if (typeof renderMonth === "function") renderMonth();
+    if (typeof renderWeek === "function") renderWeek();
     if (typeof renderSummary === "function") renderSummary();
   });
   window._saveSlot = async function(date, slotId, data) {
@@ -483,7 +483,7 @@ function tryLogin() {
     document.getElementById('btnExpenses').style.display = '';
     document.getElementById('btnNightReport').style.display = '';
     document.getElementById('clipBar').style.display = '';
-    populateWeeks(); renderWeek();
+    populateWeeks(true); renderWeek();
   } else if (pwd === STAFF_PWD) {
     isStaff = true;
     isAdmin = false;
@@ -493,7 +493,7 @@ function tryLogin() {
     document.getElementById('btnNextWeek').style.display = '';
     document.getElementById('btnExport').style.display = 'none';
     document.getElementById('clipBar').style.display = '';
-    populateWeeks(); renderWeek();
+    populateWeeks(true); renderWeek();
   } else {
     document.getElementById('loginErr').style.display = 'block';
     document.getElementById('loginPwd').value = '';
@@ -807,15 +807,16 @@ function copyPreview(){
 function shareWA(){window.open('https://wa.me/?text='+encodeURIComponent(previewMsg),'_blank');}
 
 function onMonthChange(){
-  populateWeeks();
+  populateWeeks(false); // don't preserve week when month changes
   renderWeek();
 }
 
-function populateWeeks(){
+function populateWeeks(preserveWeek){
   var mi=parseInt(document.getElementById('monthSel').value);
   var monthDays=ALL_MONTHS[mi];
   var weeks=buildWeeksForMonth(monthDays);
   var sel=document.getElementById('weekSel');
+  var prevWeek=parseInt(sel.value)||0; // remember current week
   sel.innerHTML='';
   for(var wi=0;wi<weeks.length;wi++){
     var w=weeks[wi];
@@ -824,6 +825,10 @@ function populateWeeks(){
     opt.value=wi;
     opt.textContent='Week '+(wi+1)+' ('+MONTH_SHORT[mi]+' '+first.num+(first.num!==last.num?' - '+last.num:'')+')';
     sel.appendChild(opt);
+  }
+  // Restore previous week if preserving, else keep as is
+  if(preserveWeek && prevWeek < weeks.length){
+    sel.value=prevWeek;
   }
 }
 
@@ -1161,15 +1166,15 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSlotMo
 
 // Set current month automatically
 var currentMonth = new Date().getMonth();
-document.getElementById('monthSel').value = currentMonth;
-populateWeeks();
-// Set current week
 var todayDate = new Date();
-var weeks = buildWeeksForMonth(ALL_MONTHS[currentMonth]);
-for(var wi=0; wi<weeks.length; wi++){
-  for(var di=0; di<weeks[wi].length; di++){
-    if(weeks[wi][di].num === todayDate.getDate()){
-      document.getElementById('weekSel').value = wi;
+document.getElementById('monthSel').value = currentMonth;
+populateWeeks(false);
+// Set current week based on today's date
+var _weeks = buildWeeksForMonth(ALL_MONTHS[currentMonth]);
+for(var _wi=0; _wi<_weeks.length; _wi++){
+  for(var _di=0; _di<_weeks[_wi].length; _di++){
+    if(_weeks[_wi][_di].num === todayDate.getDate()){
+      document.getElementById('weekSel').value = _wi;
       break;
     }
   }
