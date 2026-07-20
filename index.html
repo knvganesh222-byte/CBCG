@@ -337,7 +337,7 @@ main { padding:14px 6px 30px; }
 <label>Week:</label>
 <select id="weekSel" onchange="renderWeek()"></select>
 <button class="btn" style="background:#25d366;color:white;" onclick="shareAvailabilityWA()">📲 Share Availability</button>
-<button class="btn" id="btnNextWeek" style="background:#0d1b2a;color:white;display:none;" onclick="nextWeekSlots()">📋 Next Week Slots</button>
+<button class="btn" id="btnNextWeek" style="background:#0d1b2a;color:white;display:none;" onclick="nextWeekSlots()">📋 Week Slots</button>
 <button class="btn btn-gold" id="btnExport" style="display:none;" onclick="exportSummary()">📋 Export Summary</button>
 <button class="btn" id="btnExpenses" style="display:none;background:#dc2626;color:white;" onclick="openExpenses()">💸 Expenses</button>
 <button class="btn" id="btnNightReport" style="display:none;background:#0d1b2a;color:#f4a900;font-weight:700;" onclick="sendNightReport()">🌙 Night Report</button>
@@ -770,35 +770,32 @@ function shareAvailabilityWA(){
   document.getElementById('previewModal').classList.add('on');
 }
 function nextWeekSlots(){
+  var mi=parseInt(document.getElementById('monthSel').value)||0;
+  var wi=parseInt(document.getElementById('weekSel').value)||0;
+  var weeks=buildWeeksForMonth(ALL_MONTHS[mi]);
+  var days=weeks[wi]||weeks[0];
   var DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var SS=['6am','10am','2pm','6pm','10pm'];
-  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var today=new Date(); today.setHours(0,0,0,0);
-  var dow=today.getDay(); var dtm=dow===0?1:(8-dow);
-  var nextMon=new Date(today); nextMon.setDate(today.getDate()+dtm);
-  var wkd=[];
-  for(var i=0;i<7;i++){
-    var d=new Date(nextMon); d.setDate(nextMon.getDate()+i);
-    var y=d.getFullYear(); var m=d.getMonth()+1; var dd=d.getDate();
-    wkd.push({full:y+'-'+(m<10?'0'+m:''+m)+'-'+(dd<10?'0'+dd:''+dd),dt:d});
-  }
-  var fd=wkd[0].dt; var ld=wkd[6].dt;
   var NL='\n';
-  var msg='*'+fd.getDate()+' '+MN[fd.getMonth()]+' to '+ld.getDate()+' '+MN[ld.getMonth()]+'*'+NL+'*All Slots*'+NL;
-  for(var i=0;i<wkd.length;i++){
-    var dayName=DN[wkd[i].dt.getDay()];
-    msg+=NL+'*'+dayName+', '+wkd[i].dt.getDate()+' '+MN[wkd[i].dt.getMonth()]+'*'+NL;
+  var first=days[0]; var last=days[days.length-1];
+  var msg='*'+MONTH_NAMES[mi]+' — Week '+(wi+1)+'*'+NL;
+  msg+='*'+first.num+' to '+last.num+' '+MONTH_SHORT[mi]+'*'+NL;
+  msg+='────────────────────'+NL;
+  for(var i=0;i<days.length;i++){
+    var day=days[i];
+    var d2=new Date(day.full+'T00:00:00');
+    msg+=NL+'*'+DN[d2.getDay()]+', '+day.num+' '+MONTH_SHORT[mi]+'*'+NL;
     for(var j=0;j<SLOTS.length;j++){
-      var b=window.bookings[wkd[i].full]&&window.bookings[wkd[i].full][SLOTS[j].id]?window.bookings[wkd[i].full][SLOTS[j].id]:null;
+      var b=window.bookings[day.full]&&window.bookings[day.full][SLOTS[j].id]?window.bookings[day.full][SLOTS[j].id]:null;
       var be=b&&b.ball?(b.ball==='cricket'?' \u26BE':' \uD83C\uDFBE'):'';
       var teamName=b?b.name+be:'Available';
       msg+=SS[j]+' - '+teamName+NL;
     }
   }
-  msg+=NL+'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500'+NL;
+  msg+=NL+'────────────────────'+NL;
   msg+='\uD83D\uDCDE To book: https://cbcricketground.vercel.app';
   previewMsg=msg;
-  document.getElementById('previewTitle').textContent='\uD83D\uDCCB Next Week Slots';
+  document.getElementById('previewTitle').textContent='\uD83D\uDCCB Week Slots';
   document.getElementById('previewText').value=msg;
   document.getElementById('previewModal').classList.add('on');
 }
